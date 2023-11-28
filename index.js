@@ -23,51 +23,60 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.get("/api/:date", function (req, res) {
-  const userInput = req.params.date;
+app.get("/api/",(req,res)=>{
+  let date =  new Date();
+  res.json({unix: date.getTime(),utc: date.toUTCString()})
 
-  let date = new Date(userInput);
-  if (isValidDate(userInput)) {
+});
 
-    
-    if (!isNaN(userInput)) {
-      const unix = parseInt(userInput);
-      date = new Date(unix);
-      return res.json({
-        unix: unix,
-        date: date.toUTCString()
-      });
-    }
+app.get("/api/:date", (req, res) => {
+  let date = req.params.date;
 
-    res.json({
-      yo: "yo",
-      unix: date.getTime(),
-      utc: date.toUTCString(),
-    });
-
-  }else {
-
-    res.json({ error: "Invalid Date",value:isValidDate(userInput)});
+  if (isValidDate(date))
+  {
+    let realDate = new Date(date);
+    res.json({ unix: realDate.getTime(),utc: realDate.toUTCString() });
+  }
+  else if (isValidUnixDate(date)) 
+  {
+    let realDate = new Date(parseInt(date));
+    res.json({ unix: parseInt(date) ,utc: realDate.toUTCString() });
+  }
+  else if(date == "")
+  {
+    res.json({message: "Nothing to show"});
+  }
+  else 
+  {
+    res.json({ error: "Invalid Date" });
   }
 });
 
 function isValidDate(dateStr) {
-  // Try parsing as a standard date format
-  let standardDate = new Date(dateStr);
-  if (!isNaN(standardDate.getTime())) {
-      return true;
-  }
+  // Expression régulière pour le format "YYYY-MM-DD"
+  let dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-  // Try parsing as a Unix timestamp
-  let unixTimestamp = parseInt(dateStr, 10);
-  if (!isNaN(unixTimestamp)) {
-      let unixDate = new Date(unixTimestamp * 1000); // Convert to milliseconds
-      return !isNaN(unixDate.getTime());
+  if (dateRegex.test(dateStr)) {
+    // La chaîne correspond au format "YYYY-MM-DD"
+    let dateObject = new Date(dateStr);
+
+    // Vérifie si la date est valide après la conversion
+    return !isNaN(dateObject.getTime());
   }
 
   return false;
 }
 
+function isValidUnixDate(unixTimestamp) {
+  // Convertit le timestamp Unix en millisecondes
+  let milliseconds = unixTimestamp * 1000;
+
+  // Tente de créer un objet Date à partir des millisecondes
+  let dateObject = new Date(milliseconds);
+
+  // Vérifie si la date est valide après la conversion
+  return !isNaN(dateObject.getTime());
+}
 
 // listen for requests :)
 var listener = app.listen("3000", function () {
